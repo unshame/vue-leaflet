@@ -5,8 +5,13 @@
       layer-type="base"
       name="OpenStreetMap"
     ></l-tile-layer>
-    <l-geo-json :geojson="geojson"></l-geo-json>
+    <l-geo-json
+      v-if="shown"
+      :geojson="geojson"
+      :options="geojsonOptions"
+    ></l-geo-json>
   </l-map>
+  <button @click="shown = !shown">Toggle</button>
 </template>
 <script>
 import { LMap, LTileLayer, LGeoJson } from "./../../components";
@@ -18,10 +23,30 @@ export default {
     LGeoJson,
   },
   data() {
+    const onAreaClick = this.onAreaClick;
+
     return {
       zoom: 8,
       geojson: null,
+      shown: true,
+      geojsonOptions: {
+        onEachFeature: (feature, layer) => {
+          layer.on({
+            click: async (e) => {
+              onAreaClick(e, layer);
+            },
+          });
+          layer.bindTooltip("Hello", {});
+        },
+      },
     };
+  },
+  methods: {
+    onAreaClick(e, layer) {
+      this.$refs.map.leafletObject.fitBounds(layer.getBounds(), {
+        animate: true,
+      });
+    },
   },
   async created() {
     const response = await fetch(
